@@ -15,6 +15,7 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
+      contextIsolation: false,
     },
   });
 
@@ -35,6 +36,11 @@ function createWindow(): void {
   else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
+
+  ipcMain.on("start-chat-stream", (event, _args) => {
+    const [replyPort] = event.ports;
+    replyPort.postMessage("pong");
+  });
 }
 
 // This method will be called when Electron has finished
