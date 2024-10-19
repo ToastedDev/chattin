@@ -3,6 +3,7 @@ import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
 
 import icon from "../../resources/icon.png?asset";
+import { getLiveChatContinuation, stringify, withContext } from "./youtube/utils";
 
 function createWindow(): void {
   // Create the browser window.
@@ -37,9 +38,58 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 
-  ipcMain.on("start-chat-stream", (event, _args) => {
+  ipcMain.on("start-chat-stream", async (event, _args) => {
     const [replyPort] = event.ports;
-    replyPort.postMessage("pong");
+    let timeout;
+    let continuation: string | null = getLiveChatContinuation({
+      channelId: "UCeGCG8SYUIgFO13NyOe6reQ",
+      videoId: "L0jKCtHzkyE",
+    });
+
+    async function fetchYouTubeChat() {
+      const res = await fetch(`https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": "en",
+          "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+        },
+        body: withContext({
+          continuation,
+        }),
+      });
+      const data = await res.json();
+      const { continuationContents } = data;
+      const actions = continuationContents.liveChatContinuation.actions;
+
+      if (actions?.length > 0) {
+        replyPort.postMessage(JSON.stringify({
+          event: "messages",
+          data: actions.filter(
+            (action: any) => action.addChatItemAction && action.addChatItemAction.clientId,
+          ).map((action: any) => ({
+            id: action.addChatItemAction.item.liveChatTextMessageRenderer.id,
+            content: stringify(action.addChatItemAction.item.liveChatTextMessageRenderer.message),
+            author: {
+              name: stringify(action.addChatItemAction.item.liveChatTextMessageRenderer.authorName),
+            },
+          })),
+        }));
+      }
+
+      const continuationObj = Object.values<any>(continuationContents.liveChatContinuation.continuations[0])[0];
+
+      continuation = continuationObj.continuation;
+      timeout = setTimeout(fetchYouTubeChat, continuationObj.timeoutMs);
+    }
+
+    fetchYouTubeChat();
+
+    replyPort.on("close", () => {
+      if (timeout)
+        clearTimeout(timeout);
+    });
   });
 }
 
