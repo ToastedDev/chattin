@@ -28,7 +28,9 @@ function Message({ message }: { message: Message }): JSX.Element {
 }
 
 function App(): JSX.Element {
+  const chatElemRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
   useEffect(() => {
     const { port1, port2 } = new MessageChannel();
@@ -46,10 +48,41 @@ function App(): JSX.Element {
     };
   }, []);
 
+  useEffect(() => {
+    const chatElem = chatElemRef.current!;
+
+    function onScroll() {
+      if (chatElem.scrollTop < chatElem.scrollHeight - chatElem.clientHeight) {
+        setShowScrollIndicator(true);
+      }
+      else {
+        setShowScrollIndicator(false);
+      }
+    }
+
+    chatElem.addEventListener("scroll", onScroll);
+
+    return () => {
+      chatElem.removeEventListener("scroll", onScroll);
+    };
+  }, [chatElemRef]);
+
   return (
     <div className="h-screen overflow-hidden flex flex-col">
+      {showScrollIndicator && (
+        <button
+          type="button"
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 px-2 bg-gray-200"
+          onClick={() => {
+            chatElemRef.current!.scrollTo({ top: chatElemRef.current!.scrollHeight, behavior: "smooth" });
+          }}
+        >
+          <p>Scroll to bottom</p>
+        </button>
+      )}
       <div
         className="flex-grow p-4 overflow-y-auto"
+        ref={chatElemRef}
       >
         {messages.map(message => <Message key={message.id + message.content} message={message} />)}
       </div>
