@@ -68,13 +68,31 @@ function createWindow(): void {
           event: "messages",
           data: actions.filter(
             (action: any) => action.addChatItemAction && action.addChatItemAction.clientId,
-          ).map((action: any) => ({
-            id: action.addChatItemAction.item.liveChatTextMessageRenderer.id,
-            content: stringify(action.addChatItemAction.item.liveChatTextMessageRenderer.message),
-            author: {
-              name: stringify(action.addChatItemAction.item.liveChatTextMessageRenderer.authorName),
-            },
-          })),
+          ).map((action: any) => {
+            const renderer = action.addChatItemAction.item.liveChatTextMessageRenderer;
+            let isModerator = false;
+
+            if ("authorBadges" in renderer && renderer.authorBadges) {
+              for (const badge of renderer.authorBadges) {
+                const renderer = badge.liveChatAuthorBadgeRenderer;
+                const iconType = renderer.icon?.iconType;
+                switch (iconType) {
+                  case "MODERATOR":
+                    isModerator = true;
+                    break;
+                }
+              }
+            }
+
+            return {
+              id: renderer.id,
+              content: stringify(renderer.message),
+              author: {
+                name: stringify(renderer.authorName),
+              },
+              isModerator,
+            };
+          }),
         }));
       }
 
