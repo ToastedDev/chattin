@@ -1,9 +1,10 @@
-import type { Message } from "@shared/types";
+import type { Message, Tab } from "@shared/types";
 
 import { electronApp, is } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { Masterchat, stringify } from "masterchat";
 import crypto from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import icon from "../../resources/icon.png?asset";
@@ -135,6 +136,23 @@ function createWindow(): void {
     replyPort.on("close", () => {
       mc.stop();
     });
+  });
+
+  ipcMain.handle("get-storage", async (_event, key) => {
+    try {
+      const data = await readFile(join(app.getPath("userData"), "data.json"), "utf-8");
+      return JSON.stringify(JSON.parse(data)[key]);
+    }
+    catch {
+      await writeFile(join(app.getPath("userData"), "data.json"), "{}");
+      return {};
+    }
+  });
+
+  ipcMain.handle("set-storage", async (_event, key, value) => {
+    const storage = (await readFile(join(app.getPath("userData"), "storage.json"), "utf-8").catch(() => null)) ?? {};
+    storage[key] = JSON.parse(value);
+    await writeFile(join(app.getPath("userData"), "data.json"), JSON.stringify(storage));
   });
 }
 

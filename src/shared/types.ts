@@ -10,3 +10,10 @@ export interface Message {
     };
   };
 }
+
+export interface Tab {
+  id: string;
+  title: string;
+  channelId?: string;
+  videoId?: string;
+}
