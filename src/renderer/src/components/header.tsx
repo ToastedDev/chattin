@@ -34,7 +34,7 @@ const formSchema = z.object({
   { message: "Exactly one of channelId or videoId must be provided." },
 );
 
-export function Tabs() {
+export function Header() {
   const navigate = useNavigate();
   const url = useRouterState({
     select: state => state.location,
@@ -109,7 +109,7 @@ export function Tabs() {
         ))
       }
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger>
+        <DialogTrigger className="py-1">
           <Plus className="h-6 w-6" />
         </DialogTrigger>
         <DialogContent>

@@ -1,11 +1,11 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 
-import { Tabs } from "@/components/tabs";
+import { Header } from "@/components/header";
 
 export const Route = createRootRoute({
   component: () => (
     <div className="h-screen overflow-hidden flex flex-col">
-      <Tabs />
+      <Header />
       <Outlet />
     </div>
   ),
