@@ -34,7 +34,6 @@ function App(): JSX.Element {
       const data = JSON.parse(event.data);
       if (data.type === "chats") {
         setMessages(prev => [...prev, ...data.data]);
-        console.log(data.data);
       }
     };
 
