@@ -50,7 +50,7 @@ function App(): JSX.Element {
       const { scrollTop, scrollHeight, clientHeight } = chatElem;
       const maxHeight = scrollHeight - clientHeight;
       const scrolledPercent = (scrollTop / maxHeight) * 100;
-      if (scrolledPercent < 100) {
+      if (Math.round(scrolledPercent) < 100) {
         setShowScrollIndicator(true);
       }
       else {
