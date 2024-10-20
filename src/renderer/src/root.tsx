@@ -1,13 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import type { Message } from "@shared/types";
 
-interface Message {
-  id: string;
-  content: string;
-  author: {
-    name: string;
-  };
-  isModerator: boolean;
-}
+import { useEffect, useRef, useState } from "react";
 
 // eslint-disable-next-line ts/no-redeclare
 function Message({ message }: { message: Message }): JSX.Element {
@@ -18,9 +11,9 @@ function Message({ message }: { message: Message }): JSX.Element {
 
   return (
     <div ref={ref}>
-      <p className="inline font-bold" style={{ color: message.isModerator ? "#5e84f1" : "initial" }}>
+      <p className="inline font-bold" style={{ color: message.author.badges.moderator ? "#5e84f1" : "initial" }}>
         {message.author.name}
-        {message.isModerator && <svg className="w-4 h-4 inline fill-current mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" focusable="false" aria-hidden="true"><path d="M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.90894765,1 4.37379823,1.10270499 3.88047304,1.29027875 L6.95744681,4.36725249 L4.36725255,6.95744681 L1.29027875,3.88047305 C1.10270498,4.37379824 1,4.90894766 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722256,9.93617022 6.56237198,9.83346524 7.05569716,9.64589147 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"></path></svg>}
+        {message.author.badges.moderator && <svg className="w-4 h-4 inline fill-current ml-1 mb-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" focusable="false" aria-hidden="true"><path d="M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.90894765,1 4.37379823,1.10270499 3.88047304,1.29027875 L6.95744681,4.36725249 L4.36725255,6.95744681 L1.29027875,3.88047305 C1.10270498,4.37379824 1,4.90894766 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722256,9.93617022 6.56237198,9.83346524 7.05569716,9.64589147 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"></path></svg>}
         :
         {" "}
       </p>
@@ -39,7 +32,7 @@ function App(): JSX.Element {
     window.electron.ipcRenderer.postMessage("start-chat-stream", {}, [port2]);
     port1.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.event === "messages") {
+      if (data.type === "chats") {
         setMessages(prev => [...prev, ...data.data]);
       }
     };
