@@ -1,8 +1,9 @@
 import type { Message } from "@shared/types";
 
-import { electronApp, is, optimizer } from "@electron-toolkit/utils";
+import { electronApp, is } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { Masterchat, stringify } from "masterchat";
+import crypto from "node:crypto";
 import { join } from "node:path";
 
 import icon from "../../resources/icon.png?asset";
@@ -40,6 +41,14 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 
+  function generateId(...params) {
+  // Combine parameters into a single string
+    const combined = `${params.join("_")}_${Date.now()}`;
+
+    // Encode the combined string to make it unique
+    return crypto.createHash("md5").update(combined).digest("hex");
+  }
+
   ipcMain.on("start-chat-stream", async (event, _args) => {
     const [replyPort] = event.ports;
 
@@ -49,7 +58,7 @@ function createWindow(): void {
       replyPort.postMessage(JSON.stringify({
         type: "chats",
         data: chats.map(chat => ({
-          id: chat.id,
+          id: generateId(chat.id),
           content: stringify(chat.message!),
           author: {
             name: chat.authorName!,
@@ -82,7 +91,28 @@ app.whenReady().then(() => {
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on("browser-window-created", (_, window) => {
-    optimizer.watchWindowShortcuts(window);
+    window.webContents.on("before-input-event", (event, input) => {
+      if (!is.dev) {
+        if (input.code === "KeyR" && (input.control || input.meta))
+          event.preventDefault();
+      }
+      else {
+        if (input.code === "F12") {
+          if (window.webContents.isDevToolsOpened()) {
+            window.webContents.closeDevTools();
+          }
+          else {
+            window.webContents.openDevTools({ mode: "undocked" });
+          }
+        }
+      }
+
+      if (input.control && input.key === "=") { // CTRL+= for zooming in
+        const zoomFactor = window.webContents.getZoomLevel();
+        window.webContents.setZoomLevel(zoomFactor + 0.5);
+        event.preventDefault();
+      }
+    });
   });
 
   // IPC test

@@ -34,6 +34,7 @@ function App(): JSX.Element {
       const data = JSON.parse(event.data);
       if (data.type === "chats") {
         setMessages(prev => [...prev, ...data.data]);
+        console.log(data.data);
       }
     };
 
@@ -47,7 +48,7 @@ function App(): JSX.Element {
     const chatElem = chatElemRef.current!;
 
     function onScroll() {
-      if (chatElem.scrollTop < chatElem.scrollHeight - chatElem.clientHeight) {
+      if (Math.floor(chatElem.scrollTop) < chatElem.scrollHeight - chatElem.clientHeight) {
         setShowScrollIndicator(true);
       }
       else {
@@ -63,11 +64,11 @@ function App(): JSX.Element {
   }, [chatElemRef]);
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col bg-neutral-900 text-white">
       {showScrollIndicator && (
         <button
           type="button"
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 px-2 bg-gray-200"
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 px-2 bg-neutral-800 rounded-full"
           onClick={() => {
             chatElemRef.current!.scrollTo({ top: chatElemRef.current!.scrollHeight, behavior: "smooth" });
           }}
