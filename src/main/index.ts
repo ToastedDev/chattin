@@ -49,7 +49,7 @@ function createWindow(): void {
   ipcMain.on("start-chat-stream", async (event, _args) => {
     const [replyPort] = event.ports;
 
-    const mc = await Masterchat.init("L0jKCtHzkyE");
+    const mc = await Masterchat.init("dKxFLR7S7YI");
 
     mc.on("chats", (chats) => {
       replyPort.postMessage(JSON.stringify({
