@@ -1,4 +1,7 @@
+import type { Tab } from "@shared/types";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -9,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -24,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useTabsStore } from "@/lib/stores/tabs";
 
 const formSchema = z.object({
   channel: z.string().optional(),
@@ -39,9 +40,20 @@ export function Header() {
   const url = useRouterState({
     select: state => state.location,
   });
-
-  const tabsStore = useTabsStore();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState<boolean>();
+
+  const { data: tabs } = useQuery({
+    queryKey: ["tabs"],
+    queryFn: () => window.electron.ipcRenderer.invoke("get-tabs") as Promise<Tab[]>,
+  });
+
+  const { mutate } = useMutation({
+    mutationFn: async (tab: Tab) =>
+      window.electron.ipcRenderer.send("add-tab", tab),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["tabs"] }),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,27 +68,29 @@ export function Header() {
       const urlOrId = values.channel;
       const channel = await window.electron.ipcRenderer.invoke("get-channel", urlOrId);
 
-      tabsStore.addTab({
-        id: Math.random().toString(36),
+      mutate({
+        id: Math.random().toString(36).slice(0, 8),
         title: channel.name,
         channelId: channel.id,
       });
       setIsOpen(false);
-      navigate({
-        to: "/chat",
-        search: {
-          channelId: channel.id,
-        },
-      });
+      if (url.pathname !== "/chat") {
+        navigate({
+          to: "/chat",
+          search: {
+            channelId: channel.id,
+          },
+        });
+      }
     }
     else if (values.video && values.video.length > 0) {
       const urlOrId = values.video;
       const video = await window.electron.ipcRenderer.invoke("get-video", urlOrId);
 
-      tabsStore.addTab({
-        id: Math.random().toString(36),
+      mutate({
+        id: Math.random().toString(36).slice(0, 8),
         title: video.title,
-        videoId: video.id,
+        channelId: video.id,
       });
       setIsOpen(false);
       if (url.pathname !== "/chat") {
@@ -93,7 +107,7 @@ export function Header() {
   return (
     <div className="flex items-center gap-2">
       {
-        tabsStore.tabs.map(tab => (
+        tabs?.map(tab => (
           <Link
             key={tab.id}
             to="/chat"

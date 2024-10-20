@@ -11,6 +11,9 @@ function Message({ message }: { message: Message }): JSX.Element {
     ref.current!.scrollIntoView();
   }, [ref]);
 
+  const urlRegex = /(https?:\/\/\S+)/g;
+  const parts = message.content.split(urlRegex);
+
   return (
     <div ref={ref}>
       <p className="inline font-bold data-[is-moderator=true]:text-blue-500 data-[is-owner=true]:text-yellow-500" data-is-moderator={message.author.badges.moderator} data-is-owner={message.author.badges.owner}>
@@ -19,7 +22,17 @@ function Message({ message }: { message: Message }): JSX.Element {
         :
         {" "}
       </p>
-      {message.content}
+      <p className="inline break-words">
+        {parts.map((part, index) => {
+          if (urlRegex.test(part)) {
+          // eslint-disable-next-line react/no-array-index-key
+            return <a key={index} href={part} className="underline" target="_blank">{part}</a>;
+          }
+          else {
+            return part;
+          }
+        })}
+      </p>
     </div>
   );
 }
@@ -106,7 +119,7 @@ export const Route = createFileRoute("/chat")({
           </button>
         )}
         <div
-          className="flex-grow p-4 overflow-y-auto"
+          className="flex-grow overflow-y-auto overflow-x-hidden p-4"
           ref={chatElemRef}
         >
           {messages.map(message => <Message key={message.id + message.content} message={message} />)}

@@ -47,7 +47,7 @@ function createWindow(): void {
     return crypto.createHash("md5").update(combined).digest("hex");
   }
 
-  ipcMain.handle("get-channel", async (event, urlOrId) => {
+  ipcMain.handle("get-channel", async (_, urlOrId) => {
     let url = urlOrId;
 
     if (urlOrId.startsWith("UC")) {
@@ -57,7 +57,8 @@ function createWindow(): void {
     const res = await fetch(url);
     const data = await res.text();
 
-    const id = data.match(/<link itemprop="url" href="https:\/\/www\.youtube\.com\/channel\/([A-Za-z0-9\-]+)"/)?.[1];
+    // eslint-disable-next-line regexp/prefer-w
+    const id = data.match(/<link itemprop="url" href="https:\/\/www\.youtube\.com\/channel\/([A-Za-z0-9\-_]+)"/)?.[1];
 
     if (!id) {
       throw new Error("Invalid channel URL");
@@ -69,7 +70,7 @@ function createWindow(): void {
     };
   });
 
-  ipcMain.handle("get-video", async (event, urlOrId: string) => {
+  ipcMain.handle("get-video", async (_, urlOrId: string) => {
     let url = urlOrId;
 
     if (!urlOrId.includes("youtube.com") && !urlOrId.includes("youtu.be")) {
@@ -85,7 +86,7 @@ function createWindow(): void {
     };
   });
 
-  ipcMain.handle("get-current-stream", async (event, channelId: string) => {
+  ipcMain.handle("get-current-stream", async (_, channelId: string) => {
     const res = await fetch(`https://youtube.com/channel/${channelId}/streams`);
     const html = await res.text();
     const initialData = JSON.parse(
@@ -138,21 +139,31 @@ function createWindow(): void {
     });
   });
 
-  ipcMain.handle("get-storage", async (_event, key) => {
+  async function getData() {
     try {
       const data = await readFile(join(app.getPath("userData"), "data.json"), "utf-8");
-      return JSON.stringify(JSON.parse(data)[key]);
+      return JSON.parse(data);
     }
     catch {
       await writeFile(join(app.getPath("userData"), "data.json"), "{}");
       return {};
     }
+  }
+
+  async function setData(data) {
+    await writeFile(join(app.getPath("userData"), "data.json"), JSON.stringify(data));
+  }
+
+  ipcMain.handle("get-tabs", async (_) => {
+    const data = await getData();
+    return data.tabs ?? [];
   });
 
-  ipcMain.handle("set-storage", async (_event, key, value) => {
-    const storage = (await readFile(join(app.getPath("userData"), "storage.json"), "utf-8").catch(() => null)) ?? {};
-    storage[key] = JSON.parse(value);
-    await writeFile(join(app.getPath("userData"), "data.json"), JSON.stringify(storage));
+  ipcMain.on("add-tab", async (_, tab: Tab) => {
+    const data = await getData();
+    data.tabs ??= [];
+    data.tabs.push(tab);
+    await setData(data);
   });
 }
 
