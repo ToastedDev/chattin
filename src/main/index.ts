@@ -41,11 +41,8 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 
-  function generateId(...params) {
-  // Combine parameters into a single string
-    const combined = `${params.join("_")}_${Date.now()}`;
-
-    // Encode the combined string to make it unique
+  function generateId(clientId: string): string {
+    const combined = `${clientId}_${Date.now()}`;
     return crypto.createHash("md5").update(combined).digest("hex");
   }
 
