@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
+    "moduleResolution": "bundler",
     "paths": {
       "@shared/*": ["src/shared/*"]
     },
