@@ -2,6 +2,7 @@ import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import { resolve } from "node:path";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   main: {
@@ -16,6 +17,6 @@ export default defineConfig({
         "@renderer": resolve("src/renderer/src"),
       },
     },
-    plugins: [TanStackRouterVite(), react()],
+    plugins: [TanStackRouterVite(), react(), tsconfigPaths()],
   },
 });

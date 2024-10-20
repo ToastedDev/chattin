@@ -46,10 +46,48 @@ function createWindow(): void {
     return crypto.createHash("md5").update(combined).digest("hex");
   }
 
-  ipcMain.on("start-chat-stream", async (event, _args) => {
+  ipcMain.handle("get-channel", async (event, urlOrId) => {
+    let url = urlOrId;
+
+    if (urlOrId.startsWith("UC")) {
+      url = `https://youtube.com/channel/${urlOrId}`;
+    }
+
+    const res = await fetch(url);
+    const data = await res.text();
+
+    const id = data.match(/<link itemprop="url" href="https:\/\/www\.youtube\.com\/channel\/([A-Za-z0-9\-]+)"/)?.[1];
+
+    if (!id) {
+      throw new Error("Invalid channel URL");
+    }
+
+    return {
+      id,
+      name: data.match(/<meta itemprop="name" content="([^"]+)"/)?.[1],
+    };
+  });
+
+  ipcMain.handle("get-video", async (event, urlOrId: string) => {
+    let url = urlOrId;
+
+    if (!urlOrId.includes("youtube.com") && !urlOrId.includes("youtu.be")) {
+      url = `https://youtube.com/watch?v=${urlOrId}`;
+    }
+
+    const res = await fetch(url);
+    const data = await res.text();
+
+    return {
+      id: urlOrId.includes("youtu.be") ? urlOrId.split("/").pop() : urlOrId.split("v=").pop()?.split("&").shift(),
+      title: data.match(/<meta itemprop="name" content="([^"]+)"/)?.[1],
+    };
+  });
+
+  ipcMain.on("start-chat-stream", async (event, args) => {
     const [replyPort] = event.ports;
 
-    const mc = await Masterchat.init("dKxFLR7S7YI");
+    const mc = await Masterchat.init(args.videoId);
 
     mc.on("chats", (chats) => {
       replyPort.postMessage(JSON.stringify({

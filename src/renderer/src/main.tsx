@@ -1,10 +1,14 @@
-import "./assets/main.css";
+import "./main.css";
 
-import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
 import { routeTree } from "./routeTree.gen";
+
+// const memoryHistory = createMemoryHistory({
+//   initialEntries: ["/"], // Pass your initial url
+// });
 
 const router = createRouter({ routeTree });
 
