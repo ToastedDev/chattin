@@ -84,6 +84,29 @@ function createWindow(): void {
     };
   });
 
+  ipcMain.handle("get-current-stream", async (event, channelId: string) => {
+    const res = await fetch(`https://youtube.com/channel/${channelId}/streams`);
+    const html = await res.text();
+    const initialData = JSON.parse(
+      `{${html.split("var ytInitialData = {")[1].split("};")[0]}}`,
+    );
+    const streams = initialData.contents.twoColumnBrowseResultsRenderer.tabs
+      .find((tab: any) => tab.tabRenderer.title === "Live")
+      ?.tabRenderer
+      .content
+      .richGridRenderer
+      .contents
+      .filter(
+        (stream: any) =>
+          !stream.richItemRenderer.content.videoRenderer.lengthText,
+      )
+      .map(
+        (stream: any) => stream.richItemRenderer.content.videoRenderer.videoId,
+      );
+
+    return streams[0];
+  });
+
   ipcMain.on("start-chat-stream", async (event, args) => {
     const [replyPort] = event.ports;
 

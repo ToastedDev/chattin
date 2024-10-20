@@ -6,11 +6,11 @@ import ReactDOM from "react-dom/client";
 
 import { routeTree } from "./routeTree.gen";
 
-// const memoryHistory = createMemoryHistory({
-//   initialEntries: ["/"], // Pass your initial url
-// });
+const memoryHistory = createMemoryHistory({
+  initialEntries: ["/"], // Pass your initial url
+});
 
-const router = createRouter({ routeTree });
+const router = createRouter({ routeTree, history: memoryHistory });
 
 declare module "@tanstack/react-router" {
   interface Register {

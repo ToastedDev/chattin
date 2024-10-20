@@ -1,6 +1,6 @@
 import type { Message } from "@shared/types";
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -34,16 +34,42 @@ export const Route = createFileRoute("/chat")({
   },
   component: function Chat() {
     const searchParams = Route.useSearch();
+    const navigate = useNavigate();
 
     const chatElemRef = useRef<HTMLDivElement>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
     useEffect(() => {
+      if (searchParams.channelId) {
+        async function getVideoId() {
+          const videoId = await window.electron.ipcRenderer.invoke("get-current-stream", searchParams.channelId);
+          navigate({
+            to: "/chat",
+            search: {
+              videoId,
+            },
+          });
+        }
+        getVideoId();
+      }
+
       const { port1, port2 } = new MessageChannel();
-      window.electron.ipcRenderer.postMessage("start-chat-stream", {
-        videoId: searchParams.videoId,
-      }, [port2]);
+
+      async function startChatStream() {
+        let videoId = searchParams.videoId;
+
+        if (!videoId && searchParams.channelId) {
+          videoId = await window.electron.ipcRenderer.invoke("get-current-stream", searchParams.channelId);
+        }
+
+        window.electron.ipcRenderer.postMessage("start-chat-stream", {
+          videoId,
+        }, [port2]);
+      }
+
+      startChatStream();
+
       port1.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "chats") {
@@ -56,7 +82,7 @@ export const Route = createFileRoute("/chat")({
         port2.close();
         setMessages([]);
       };
-    }, [searchParams.videoId]);
+    }, [searchParams]);
 
     useEffect(() => {
       const chatElem = chatElemRef.current!;

@@ -102,14 +102,14 @@ export function Tabs() {
               channelId: tab.channelId,
               videoId: tab.videoId,
             })}
-            className="bg-muted/30 px-2 py-1 rounded-t-lg max-w-48 truncate aria-[current=page]:bg-muted"
+            className="bg-muted px-2 py-1 rounded-t-lg max-w-48 truncate aria-[current=page]:bg-muted/30"
           >
             {tab.title}
           </Link>
         ))
       }
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger className="bg-muted/30 p-1 rounded-t-lg">
+        <DialogTrigger>
           <Plus className="h-6 w-6" />
         </DialogTrigger>
         <DialogContent>
