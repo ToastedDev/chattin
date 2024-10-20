@@ -3,6 +3,7 @@ export interface Message {
   content: string;
   author: {
     name: string;
+    avatar: string;
     badges: {
       moderator: boolean;
       verified: boolean;

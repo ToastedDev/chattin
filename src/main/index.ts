@@ -1,7 +1,7 @@
 import type { Message, Tab } from "@shared/types";
 
 import { electronApp, is } from "@electron-toolkit/utils";
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, clipboard, ipcMain, Menu, shell } from "electron";
 import { Masterchat, stringify } from "masterchat";
 import crypto from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
@@ -122,6 +122,7 @@ function createWindow(): void {
           content: stringify(chat.message!),
           author: {
             name: chat.authorName!,
+            avatar: chat.authorPhoto!,
             badges: {
               moderator: chat.isModerator,
               verified: chat.isVerified,
@@ -164,6 +165,18 @@ function createWindow(): void {
     data.tabs ??= [];
     data.tabs.push(tab);
     await setData(data);
+  });
+
+  ipcMain.on("context-menu:link", async (_, link) => {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: "Copy link",
+        click: () => {
+          clipboard.writeText(link);
+        },
+      },
+    ]);
+    menu.popup();
   });
 }
 
