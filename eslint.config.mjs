@@ -2,7 +2,18 @@ import antfu from "@antfu/eslint-config";
 
 export default antfu({
   type: "app",
-  ignores: ["node_modules", "**/node_modules/**", "dist", "**/dist/**", "out", "**/out/**", ".gitignore", "**/.gitignore/**"],
+  ignores: [
+    "node_modules",
+    "**/node_modules/**",
+    "dist",
+    "**/dist/**",
+    "out",
+    "**/out/**",
+    ".gitignore",
+    "**/.gitignore/**",
+    "src/renderer/src/routeTree.gen.ts",
+    "src/renderer/src/components/ui/**/*",
+  ],
   typescript: true,
   react: true,
   formatters: true,
