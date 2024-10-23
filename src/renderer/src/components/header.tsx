@@ -45,12 +45,12 @@ export function Header() {
 
   const { data: tabs } = useQuery({
     queryKey: ["tabs"],
-    queryFn: () => window.electron.ipcRenderer.invoke("get-tabs") as Promise<Tab[]>,
+    queryFn: () => window.electron.ipcRenderer.invoke("tabs:get") as Promise<Tab[]>,
   });
 
   const { mutate } = useMutation({
     mutationFn: async (tab: Tab) =>
-      window.electron.ipcRenderer.send("add-tab", tab),
+      window.electron.ipcRenderer.send("tabs:add", tab),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["tabs"] }),
   });
@@ -66,7 +66,7 @@ export function Header() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (values.channel && values.channel.length > 0) {
       const urlOrId = values.channel;
-      const channel = await window.electron.ipcRenderer.invoke("get-channel", urlOrId);
+      const channel = await window.electron.ipcRenderer.invoke("yt:channel", urlOrId);
 
       mutate({
         id: Math.random().toString(36).slice(0, 8),
@@ -85,7 +85,7 @@ export function Header() {
     }
     else if (values.video && values.video.length > 0) {
       const urlOrId = values.video;
-      const video = await window.electron.ipcRenderer.invoke("get-video", urlOrId);
+      const video = await window.electron.ipcRenderer.invoke("yt:video", urlOrId);
 
       mutate({
         id: Math.random().toString(36).slice(0, 8),
