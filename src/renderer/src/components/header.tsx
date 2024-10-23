@@ -1,10 +1,10 @@
-import type { Tab } from "@shared/types";
+import type { Tab, User } from "@shared/types";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -46,6 +46,11 @@ export function Header() {
   const { data: tabs } = useQuery({
     queryKey: ["tabs"],
     queryFn: () => window.electron.ipcRenderer.invoke("tabs:get") as Promise<Tab[]>,
+  });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => window.electron.ipcRenderer.invoke("auth:current-user") as Promise<User | undefined>,
   });
 
   const { mutate } = useMutation({
@@ -104,71 +109,101 @@ export function Header() {
     }
   }
 
+  useEffect(() => {
+    window.electron.ipcRenderer.on("auth:user-updated", () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    });
+
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners("auth:user-updated");
+    };
+  }, [queryClient]);
+
   return (
-    <div className="flex items-center gap-2">
-      {
-        tabs?.map(tab => (
-          <Link
-            key={tab.id}
-            to="/chat"
-            search={prev => ({
-              ...prev,
-              channelId: tab.channelId,
-              videoId: tab.videoId,
-            })}
-            className="bg-muted px-2 py-1 rounded-t-lg max-w-48 truncate aria-[current=page]:bg-muted/30"
-          >
-            {tab.title}
-          </Link>
-        ))
-      }
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger className="py-1">
-          <Plus className="h-6 w-6" />
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add chat</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="channel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Channel</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://youtube.com/@toastedthedev" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      A YouTube channel URL.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="video"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Video</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://youtube.com/watch?v=dQw4w9WgXcQ" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      A YouTube stream URL.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit">Submit</Button>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {
+          tabs?.map(tab => (
+            <Link
+              key={tab.id}
+              to="/chat"
+              search={prev => ({
+                ...prev,
+                channelId: tab.channelId,
+                videoId: tab.videoId,
+              })}
+              className="bg-muted px-2 py-1 rounded-t-lg max-w-48 truncate aria-[current=page]:bg-muted/30"
+            >
+              {tab.title}
+            </Link>
+          ))
+        }
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger className="py-1">
+            <Plus className="h-6 w-6" />
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add chat</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="channel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Channel</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://youtube.com/@toastedthedev" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        A YouTube channel URL.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="video"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Video</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://youtube.com/watch?v=dQw4w9WgXcQ" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        A YouTube stream URL.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">Submit</Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {currentUser
+        ? (
+            <img
+              src={currentUser.avatar}
+              alt={currentUser.name}
+              onContextMenu={() => window.electron.ipcRenderer.invoke("context-menu:user")}
+              className="w-6 h-6 rounded-full"
+            />
+          )
+        : (
+            <button
+              type="button"
+              onClick={() => window.electron.ipcRenderer.invoke("auth:sign-in")}
+              className="bg-muted px-2 py-1 rounded-lg max-w-48 truncate"
+            >
+              Sign in
+            </button>
+          )}
     </div>
   );
 }

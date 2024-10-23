@@ -1,4 +1,4 @@
-import type { Tab } from "@shared/types";
+import type { Tab, User } from "@shared/types";
 
 import { app } from "electron/main";
 import { readFile, writeFile } from "node:fs/promises";
@@ -6,6 +6,7 @@ import { join } from "node:path";
 
 interface Data {
   tabs: Tab[];
+  currentUser?: User;
 }
 
 const dataPath = join(app.getPath("userData"), "data.json");

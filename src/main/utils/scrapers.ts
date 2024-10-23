@@ -18,6 +18,8 @@ export async function getChannel(urlOrId: string) {
   return {
     id,
     name: data.match(/<meta itemprop="name" content="([^"]+)"/)?.[1],
+    handle: data.match(/"canonicalBaseUrl": "\/@ToastedTheDev"/)?.[1],
+    avatar: data.match(/<meta property="og:image" content="([^"]+)"/)?.[1],
   };
 }
 

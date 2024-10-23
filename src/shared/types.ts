@@ -18,3 +18,11 @@ export interface Tab {
   channelId?: string;
   videoId?: string;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  token: string;
+}
